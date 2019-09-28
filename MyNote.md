@@ -27,17 +27,37 @@
 8. RewardTipCommand 接收`REWARD_TIP_VIEW`命令，打开RewardTipMediator(如果没有则新建)，之后发送`UPDATE_REWARD_TIP_VIEW`
 9. RewardTipViewMediator 接受`UPDATE_REWARD_TIP_VIEW`命令并执行更新页面。之后玩游主动发送的事件，等待玩家操作
 
+## 框架的目录分析
+1. FrameWork的Core中为核心的Model、View、Model。这三部分基本不会由用户直接调用，完成了但部分的操作
+2. Interface 框架的比较底层的抽象接口。定义了框架的操作
+3. Pattern 我理解为设计模式的模板，也是接口的实现。根据设计模式分了子目录，很有启发
+
+## 模块的目录分析
+~~模块中仍然分成ViewModelController，但是其中只有相应的。~~
+不说了，就是一般的目录分析就可以了
+
+
 ## 记录问题
 1. 通知的流向？
-   >Mediator、Proxy、Controller都可以发送事件
-1. View，Model，Controller可不可以再继承
-3. facede中存在神奇的GameManager和一些其他的Manager，这些manager是做什么用的还不清楚
+   >Mediator、Proxy、Controller都可以发送事件。但是Proxy(model)不接受通知
+2. View，Model，Controller可不可以再继承
+   >继承时可以继承的。但是重写方法也没什么必要，而且重写之后还需要修改Facade，使其代码使用即成的view model controller
+3. facede中存在神奇的GameManager和一些其他的Manager，这些manager是做什么用的？
+   >注意到框架代码中manager的类型时Object，且获取方法使用了泛型(限定为UnityEngine.Component)，猜测这里应该是一些自定义的Manager
+   >gameManager 是一个UnityEnginr.GameObject似乎不是框架原有的而是一位大佬加进去的，就是作为Unity通常的GameManager。
+   >框架中提供了创建manager时将Manager添加到GameManager中
 4. RegisterMediator 中会根据传入的Mediator的name做关键词，那么也就是说同一类型的的多个Mediator Register时需要线设置好各自的名字。那么命名方法框架有没有提供以及获取Mediator时怎么知道需要获得的Mediator名字
-   >感觉自己发现了盲点
+   >确实需要再创件时设置好自己的名字，在View的MediatorDictionary中会使用名字作为Key。获取Mediator时也需要传入名字
 5. Mediator,Proxy,Command的销毁处理？
+   >框架中存在RemoveXXX以及OnRemove可以用作销毁处理
 6. 若有多个数据同时改变，单个不同的Mediator监听所有改变数据中的多个时，怎么处理？（如：Mediator1关注v1，v3变化，而v1，v3的变化被分到两个事件中）
-   >解决方案应该是不让这种事情发生（我猜的）
+   >不需要共同表现，分开就分开
+   >如果需要共同对多个属性进行变化，具体情况具体分析吧。。
 7. Facade初始化时就吧所有的View(这里指UI GameObject)都实例化了？
    >可以根据获取Mediator时是否获取了null来判断是否需要初始化
    >不公具体创建哪一个mediator需要通过硬编码的方式来解决
    >仿佛有其他的框架时解决了这个问题的
+8. 业务逻辑与域逻辑：
+   >业务逻辑:指的是那些需要协调Model与View的逻辑。域逻辑:指的是仅仅是针对数据模型的操作，不论是对于客户端还是对于服务端，不论是同步的操作还是异步的操作。
+   >业务逻辑理所当然应该放在Command里来完成，而域逻辑应当放在Proxy里完成
+   >
